@@ -1,6 +1,6 @@
 {
   "name": "quantix",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Quantix — Ultra-fast hybrid circular-buffer, double-ended queue and ring-buffer in TypeScript. Pre-allocated memory, zero-copy O(1) slicing, TypedArray support, and V8-optimized iterators.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -15,6 +15,12 @@
   "engines": {
     "node": ">=18.0.0"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "llm.txt",
+    "docs"
+  ],
   "scripts": {
     "build": "tsc",
     "build:native": "node scripts/build-native.js",

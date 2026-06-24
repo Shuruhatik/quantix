@@ -23,6 +23,12 @@ function buildNative() {
     if (fs.existsSync(srcPath)) {
       fs.copyFileSync(srcPath, destPath);
       console.log(`Copied ${file.src} to ${file.dest}`);
+      
+      const distDir = path.join(__dirname, '../dist');
+      fs.mkdirSync(distDir, { recursive: true });
+      fs.copyFileSync(srcPath, path.join(distDir, 'quantix_native.node'));
+      console.log(`Copied ${file.src} to dist/quantix_native.node`);
+      
       copied = true;
       break;
     }

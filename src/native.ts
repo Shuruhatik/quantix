@@ -18,6 +18,7 @@ try {
   // Try to load the pre-built native addon
   // Path: native/target/release/quantix_native.node (Windows/Linux/macOS)
   const candidates = [
+    './quantix_native',
     '../native/target/release/quantix_native',
     '../native/target/debug/quantix_native',
   ];
