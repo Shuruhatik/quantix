@@ -2,9 +2,9 @@
 
 [![npm version](https://img.shields.io/npm/v/quantix.svg?style=flat-square)](https://www.npmjs.com/package/quantix)
 [![npm downloads](https://img.shields.io/npm/dm/quantix.svg?style=flat-square)](https://www.npmjs.com/package/quantix)
-[![license](https://img.shields.io/npm/l/quantix.svg?style=flat-square)](https://github.com/shuruhatik/quantix/blob/main/LICENSE)
+[![license](https://img.shields.io/npm/l/quantix.svg?style=flat-square)](https://github.com/Shuruhatik/quantix/blob/main/LICENSE)
 [![Rust Powered](https://img.shields.io/badge/rust-powered-orange.svg?style=flat-square&logo=rust)](https://www.rust-lang.org/)
-[![build status](https://img.shields.io/github/actions/workflow/status/shuruhatik/quantix/ci.yml?branch=main&style=flat-square)](https://github.com/shuruhatik/quantix/actions)
+[![build status](https://img.shields.io/github/actions/workflow/status/Shuruhatik/quantix/ci.yml?branch=main&style=flat-square)](https://github.com/Shuruhatik/quantix/actions)
 
 Quantix is an ultra-fast, hybrid double-ended queue, circular buffer, and ring-buffer library built for TypeScript/JavaScript and powered by an optional, precompiled **Rust Native Layer** with CPU-level SIMD acceleration.
 
@@ -118,9 +118,9 @@ console.log(buffer.sum()); // Native aggregate sum
 ## Learn More
 
 Check out the detailed documentation:
-- [API Reference](https://github.com/shuruhatik/quantix/blob/main/docs/api.md) — Complete parameter specifications and classes.
-- [Architecture & Optimizations](https://github.com/shuruhatik/quantix/blob/main/docs/architecture.md) — Deep-dive on packed arrays, register caching, and NAPI bridging.
-- [Full Benchmark Report](https://github.com/shuruhatik/quantix/blob/main/BENCHMARK_REPORT.md) — Standard and extreme performance results.
+- [API Reference](https://github.com/Shuruhatik/quantix/blob/main/docs/api.md) — Complete parameter specifications and classes.
+- [Architecture & Optimizations](https://github.com/Shuruhatik/quantix/blob/main/docs/architecture.md) — Deep-dive on packed arrays, register caching, and NAPI bridging.
+- [Full Benchmark Report](https://github.com/Shuruhatik/quantix/blob/main/BENCHMARK_REPORT.md) — Standard and extreme performance results.
 
 ---
 

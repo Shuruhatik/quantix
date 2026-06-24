@@ -6,12 +6,12 @@
   "types": "dist/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/shuruhatik/quantix.git"
+    "url": "git+https://github.com/Shuruhatik/quantix.git"
   },
   "bugs": {
-    "url": "https://github.com/shuruhatik/quantix/issues"
+    "url": "https://github.com/Shuruhatik/quantix/issues"
   },
-  "homepage": "https://github.com/shuruhatik/quantix#readme",
+  "homepage": "https://github.com/Shuruhatik/quantix#readme",
   "engines": {
     "node": ">=18.0.0"
   },
