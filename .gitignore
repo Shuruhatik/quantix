@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+
+# TypeScript Build Output
+dist/
+
+# Rust Build Output
+native/target/
+
+# Local/Scratch files
+scratch/
+*.log
+
+# Native compiled modules
+native/target/release/*.node
+native/target/debug/*.node
+
+# OS Metadata
+.DS_Store
+Thumbs.db

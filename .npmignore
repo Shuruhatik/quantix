@@ -1,0 +1,30 @@
+# Ignore dev assets
+tests/
+benchmarks/
+scratch/
+scripts/
+jest.config.js
+tsconfig.json
+BENCHMARK_REPORT.md
+
+# Ignore raw Rust source code
+native/src/
+native/Cargo.toml
+native/Cargo.lock
+native/build.rs
+
+# Ignore debug directories and intermediate build artifacts
+native/target/debug/
+native/target/release/build/
+native/target/release/deps/
+native/target/release/incremental/
+native/target/release/.fingerprint/
+native/target/release/*.dll
+native/target/release/*.lib
+native/target/release/*.exp
+native/target/release/*.pdb
+native/target/release/*.d
+native/target/release/.cargo-lock
+
+# Keep only the compiled .node library in target/release
+# (handled implicitly by not ignoring *.node)

@@ -1,0 +1,217 @@
+# Quantix: Hybrid TypeScript & Rust Deque/Ring-Buffer Library
+
+Quantix is a high-performance double-ended queue, circular buffer, and ring-buffer library written in TypeScript with an optional compiled Rust Native Layer for heavy numerical workloads. 
+
+This file serves as a reference for AI Agents and LLMs.
+
+---
+
+## Decision Matrix: When to Use What
+
+This section guides AI agents and LLMs in selecting the appropriate class and optimizing execution paths based on workload constraints.
+
+### `QuantixDeque<T>` (TypeScript-only Generic Deque)
+
+*   **When to USE `QuantixDeque`:**
+    *   **Generic Objects:** You need to store arbitrary JavaScript objects, strings, mixed arrays, or custom class instances (e.g., standard FIFO message queues, event listeners, task schedulers).
+    *   **High-Frequency Single-Item Operations:** High-frequency, single-item insertions and removals (e.g., millions of individual `push()` / `shift()` calls in a loop). TypeScript's pure JS execution avoids the Foreign Function Interface (FFI) overhead.
+    *   **Elastic Growth:** You need a queue that dynamically doubles in size when full (by default, `growable: true`).
+    *   **Custom Backing Store:** Storing primitive numbers using non-Float64 typed arrays (e.g., `Int32Array`, `Uint8Array`).
+
+*   **When to AVOID `QuantixDeque`:**
+    *   **Heavy Math Operations:** Do not use for computing sums, means, minimums, maximums, scaling, or offsets on large collections of numbers.
+    *   **Numerical Sorting:** Do not use if you need to perform high-frequency sorting on numerical arrays, as Rust's native sorting (`pdqsort`) is significantly faster.
+
+---
+
+### `QuantixBuffer` (Rust-Backed / Hybrid Float64 Circular Buffer)
+
+*   **When to USE `QuantixBuffer`:**
+    *   **Float64 Numeric Data Streams:** Ideal for time-series data, digital signal processing (DSP), financial tick data, game physics, math vectors, or sensor streams where values are `number` (Float64).
+    *   **Batch Operations:** You can insert or extract data in bulk using `pushBatch(Float64Array)` or `popBatch(count, Float64Array)`. This crosses the JS-to-Rust native boundary exactly *once* per batch, maximizing performance.
+    *   **SIMD & Math Calculations:** You need high-performance operations over the buffer content (e.g., `sum()`, `mean()`, `min()`, `max()`, `scale()`, `offset()`). These are computed in Rust (often utilizing SIMD instructions).
+    *   **Fast Numerical Sorting:** You need to sort the buffer elements. `QuantixBuffer.sortAsc()` and `sortDesc()` run Rust's standard pattern-defeating quicksort (`pdqsort`), which is up to 20x faster than JS sorting for large collections.
+
+*   **When to AVOID `QuantixBuffer`:**
+    *   **Non-Numeric Data:** You need to store objects, strings, booleans, or anything that is not a Float64 number. `QuantixBuffer` only supports `number`.
+    *   **High-Frequency Single-Item FFI Calls:** Avoid calling `.push(val)` or `.pop()` millions of times individually. Every single call to a native method incurs a V8-to-C++ (N-API) FFI boundary transition overhead. If you must use `QuantixBuffer` for high-frequency writes/reads, batch them with `pushBatch` and `popBatch`.
+    *   **Varying Types:** Avoid if you need mixed data types.
+
+---
+
+### Comparison & Selection Cheat-Sheet for AI Agents
+
+| Workload Characteristic | Recommended Tool | Rationale |
+| :--- | :--- | :--- |
+| Storing JSON / Custom Objects | `QuantixDeque<T>` | Only `QuantixDeque` supports arbitrary JS reference types. |
+| High-frequency single-item pushes/pops (pure JS) | `QuantixDeque<number>` | Avoids FFI boundary overhead. |
+| Float64 array batch analysis (e.g., timeseries) | `QuantixBuffer` | High-speed batch memory transfer using `pushBatch`/`popBatch`. |
+| SIMD/Vector scaling & offset math | `QuantixBuffer` | Rust SIMD acceleration. |
+| Fast numerical sorting of data | `QuantixBuffer` | Powered by Rust's `pdqsort` (pattern-defeating quicksort). |
+| Zero-copy sub-range viewing (slicing) | `QuantixDequeView` | Read-only slice in $O(1)$ time without copying data. |
+
+---
+
+## Architecture Overview
+
+1. **QuantixDeque (TypeScript)**
+   - Core generic queue class for arbitrary JS types/objects.
+   - Runs purely in TypeScript/JavaScript (optimized for V8).
+   - Contiguous array storage with bitwise indexing `(head + i) & mask`.
+   - Power-of-two capacities with size-checked boundary tracking.
+
+2. **QuantixBuffer (Hybrid: Rust + TS Fallback)**
+   - Specialized circular buffer for Float64 (`f64`) numbers.
+   - Uses precompiled Rust NAPI addon (`quantix_native.node`) when available.
+   - Performs heavy computations (sums, scaling, sorting) inside native code.
+   - Bypasses FFI overhead by crossing the JS-Rust boundary **once per batch** using zero-copy TypedArrays.
+   - Falls back transparently to an optimized pure JavaScript Float64Array circular buffer if the binary is missing.
+
+3. **QuantixDequeView (TypeScript)**
+   - A zero-copy, read-only window of a deque sub-range.
+   - Created in O(1) time by calling `deque.sliceView(start, end)`.
+
+---
+
+## API Quick Reference
+
+### 1. `QuantixDeque<T>` (Generic Queue)
+
+```typescript
+import { QuantixDeque } from 'quantix';
+
+// Options
+interface QuantixDequeOptions {
+  capacity?: number;             // Initial capacity (rounds to next power of 2, default: 1024)
+  growable?: boolean;            // Automatically double size when full (default: true)
+  storageType?: 'array' | TypedArrayConstructor; // Backing store (default: 'array')
+  clearOnPop?: boolean;          // Set popped slots to undefined to release for GC (default: true)
+}
+
+// Instantiation
+const deque = new QuantixDeque<number>({ capacity: 4 });
+
+// Properties
+deque.size;       // number - current element count
+deque.capacity;   // number - current physical capacity
+deque.isEmpty;    // boolean
+deque.isFull;     // boolean
+
+// Core Methods
+deque.push(value: T): number;      // Append to back. Returns new size.
+deque.unshift(value: T): number;   // Prepend to front. Returns new size.
+deque.pop(): T | undefined;        // Remove and return from back.
+deque.shift(): T | undefined;      // Remove and return from front.
+deque.peekFirst(): T | undefined;  // View first element.
+deque.peekLast(): T | undefined;   // View last element.
+deque.get(index: number): T | undefined; // Read by index (0 is front, size-1 is back).
+deque.set(index: number, value: T): void; // Write by index (0 is front).
+deque.clear(): void;               // Empty the deque.
+
+// Bulk / Iteration
+deque.pushAll(items: Iterable<T>): number;
+deque.forEach(cb: (value: T, index: number) => void): void; // Fastest loop
+deque.reduce<U>(cb: (acc: U, value: T, index: number) => U, initial: U): U;
+deque.sliceView(start?: number, end?: number): QuantixDequeView<T>; // O(1) Zero-copy
+deque.slice(start?: number, end?: number): QuantixDeque<T>; // O(N) copy
+deque.toArray(): T[];
+
+// ES6 Iteration
+for (const item of deque) { ... }
+```
+
+### 2. `QuantixBuffer` (Numeric Processing Buffer)
+
+```typescript
+import { QuantixBuffer } from 'quantix';
+
+const buf = new QuantixBuffer(capacity); // Rounds to next power of two
+
+// Properties
+buf.length;      // number - element count
+buf.capacity;    // number - capacity
+buf.isEmpty;     // boolean
+buf.isFull;      // boolean
+
+// Core Methods
+buf.push(value: number): number;
+buf.pop(): number;                    // Returns NaN if empty
+buf.shift(): number;                  // Returns NaN if empty
+buf.pushBatch(data: Float64Array): number; // Appends entire array in ONE FFI call
+buf.popBatch(count: number, dest: Float64Array): number; // Drains count elements zero-copy into dest
+
+// Numeric Operations (SIMD-accelerated in Rust)
+buf.sum(): number;                    // Returns sum of active elements
+buf.min(): number;                    // Returns minimum value (Infinity if empty)
+buf.max(): number;                    // Returns maximum value (-Infinity if empty)
+buf.mean(): number;                   // Returns average (NaN if empty)
+buf.scale(factor: number): void;      // Multiplies all elements by factor in-place
+buf.offset(delta: number): void;      // Adds delta to all elements in-place
+buf.sortAsc(): void;                  // Sorts elements ascending in-place
+buf.sortDesc(): void;                 // Sorts elements descending in-place
+buf.clear(): void;
+buf.toArray(): number[];
+```
+
+### 3. Standalone Utilities
+
+```typescript
+import { slidingSum, dotProduct, isNativeAvailable } from 'quantix';
+
+// Flag indicating if the Rust binary is loaded
+console.log(isNativeAvailable); 
+
+// Sliding window sum: O(N) window slide. Rust-backed if available.
+const sums = slidingSum(data: Float64Array, windowSize: number): Float64Array;
+
+// Dot product: A . B. SIMD-vectorized in Rust if available.
+const dot = dotProduct(a: Float64Array, b: Float64Array): number;
+```
+
+---
+
+## Common Code Patterns
+
+### High-Throughput FIFO Message Queue
+```typescript
+const queue = new QuantixDeque<string>({ capacity: 65536 });
+
+// Producer
+queue.push("event-1");
+
+// Consumer
+while (!queue.isEmpty) {
+  const event = queue.shift();
+  // process
+}
+```
+
+### Fixed-Size Sliding Window (Ring Buffer)
+```typescript
+// growable: false locks capacity and overwrites oldest element if full
+const window = new QuantixDeque<number>({ capacity: 5, growable: false });
+
+window.push(1); window.push(2); window.push(3); window.push(4); window.push(5);
+console.log(window.toArray()); // [1, 2, 3, 4, 5]
+
+window.push(6); // Overwrites 1 (oldest)
+console.log(window.toArray()); // [2, 3, 4, 5, 6]
+```
+
+### Fast Batch Numeric Pipeline (Rust)
+```typescript
+const pipeline = new QuantixBuffer(1_000_000);
+
+// Batch insert without individual JS loop overhead
+const dataChunk = new Float64Array([10.5, 20.0, 30.5, 40.0]);
+pipeline.pushBatch(dataChunk);
+
+// Scale all items by 2.0 and add 5 in-place (SIMD on CPU)
+pipeline.scale(2.0);
+pipeline.offset(5.0);
+
+// Sort using Rust pdqsort
+pipeline.sortAsc();
+
+console.log(pipeline.sum());
+```

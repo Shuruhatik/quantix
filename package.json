@@ -1,0 +1,50 @@
+{
+  "name": "quantix",
+  "version": "1.0.0",
+  "description": "Quantix — Ultra-fast hybrid circular-buffer, double-ended queue and ring-buffer in TypeScript. Pre-allocated memory, zero-copy O(1) slicing, TypedArray support, and V8-optimized iterators.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shuruhatik/quantix.git"
+  },
+  "bugs": {
+    "url": "https://github.com/shuruhatik/quantix/issues"
+  },
+  "homepage": "https://github.com/shuruhatik/quantix#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "build": "tsc",
+    "build:native": "node scripts/build-native.js",
+    "build:all": "npm run build:native && npm run build",
+    "test": "jest",
+    "bench": "node --expose-gc -r ts-node/register benchmarks/run.ts",
+    "bench:native": "node --expose-gc -r ts-node/register benchmarks/native_run.ts",
+    "bench:extreme": "node --expose-gc -r ts-node/register benchmarks/extreme_run.ts"
+  },
+  "keywords": [
+    "deque",
+    "queue",
+    "circular-buffer",
+    "ring-buffer",
+    "typedarray",
+    "buffer",
+    "fast",
+    "performance",
+    "zero-copy"
+  ],
+  "author": "Shuruhatik",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.11.24",
+    "denque": "^2.1.0",
+    "jest": "^29.7.0",
+    "js-sdsl": "^4.4.2",
+    "ts-jest": "^29.1.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}
